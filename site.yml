@@ -1,0 +1,8 @@
+- name: Configure firewall based on consul data
+  hosts: all
+  remote_user:
+  become: True
+  become_method: sudo
+
+  roles:
+    - rngkll.consulfirewallrole
