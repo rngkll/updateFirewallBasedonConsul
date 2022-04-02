@@ -30,8 +30,7 @@
     permanent: yes
     state: enabled
   loop: "{{ metrics_list }}"
-  tags:
-    - app
+  when: "'app' in inventory_hostname"
 
 # 3306 - MySQL database on app.*, requried access by backups.*.
 - name: MySQL database on app
@@ -41,5 +40,4 @@
     permanent: yes
     state: enabled
   loop: "{{ backups_list }}"
-  tags:
-    - app
+  when: "'app' in inventory_hostname"
