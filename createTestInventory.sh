@@ -17,7 +17,7 @@ items=$(echo "$TESTDATA" | jq -c -r '.')
 for item in ${items[@]}; do
     HOST=$($JQ -r '.Node' <<< $item)
     AN_HOST=$($JQ -r '.Address' <<< $item)
-	echo "$HOST ansible_host=$AN_HOST metric_list=$ML" >> dynamicInventory/test
+	echo "$HOST ansible_host=$AN_HOST metrics_list=$ML" >> dynamicInventory/test
     # whatever you are trying to do ...
 done
 
