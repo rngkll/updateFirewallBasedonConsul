@@ -1,5 +1,14 @@
 # Consul Firewall configuration tool
 
+This tool includes a bash script for creating the inventory and a playbook to call the ansible role.
+
+## Usage
+
+```
+ansible-playbook -i dynamicInventory/test site.yml --check
+```
+Note: remove `--check` to apply changes.
+
 # Ansible roles
 
 ## Ansible requirements
