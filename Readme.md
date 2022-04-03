@@ -8,7 +8,7 @@ As a firts step consul data is needed, fetch the consul data catalog and create 
 
 To create a ansible inventory a json parsing script was created, this script is designed for test environment data.
 
-script: `createTestInventory.sh`
+script: `createTestInventory.sh`, you can call the script by specifying a file with the consul data `./createTestInventory.sh test-data/services.json`
 
 This is designed to create y "dynamic inventory" based on the consul data.
 
