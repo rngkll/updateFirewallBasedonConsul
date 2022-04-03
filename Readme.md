@@ -4,6 +4,16 @@ This tool includes a bash script for creating the inventory and a playbook to ca
 
 ## Usage
 
+As a firts step consul data is needed, fetch the consul data catalog and create an ansible invetory based on it.
+
+To create a ansible inventory a json parsing script was created, this script is designed for test environment data.
+
+script: `createTestInventory.sh`
+
+This is designed to create y "dynamic inventory" based on the consul data.
+
+Use the dynamic inventory with the available playbook.
+
 ```
 ansible-playbook -i dynamicInventory/test site.yml --check
 ```
