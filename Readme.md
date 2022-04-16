@@ -1,6 +1,5 @@
 # Consul Firewall configuration tool
 
-## Docker usate
-```
-docker build . --tag consulfirewall
-```
+## Vagrant
+
+Initialize development environment with `vagrant up`.
