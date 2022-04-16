@@ -24,7 +24,8 @@ def createIPset(IPsetName):
     command = [
             "firewall-cmd", "--permanent", "--new-ipset="+IPsetName, "--type=hash:net"
             ]
-    return subprocess.Popen(command, shell=False, stdout=subprocess.PIPE).stdout.read()
+    result = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE).stdout.read()
+    return result
 
 def getIPsetList():
     command = [
@@ -65,3 +66,5 @@ print(jsonIPs)
 currentIP = ['10.0.0.1', '10.0.0.2', '10.10.0.61']
 print("Remove IPs: " + str(getExtraItemsfromlists(currentIP, jsonIPs)) )
 print("Add IPs: " + str(getMissingItemsfromlists(currentIP, jsonIPs)) )
+createIPset("app")
+print("IPsets: " + str(getIPsetList()))
