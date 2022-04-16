@@ -53,6 +53,15 @@ def getFleetIPsFromJson(jsonData, environment, fleetName):
                 print("Error getting fleet IP from json")
     return list(set(IPlist))
 
+def getExtraItemsfromlists(li1, li2):
+    return list(set(li1) - set(li2))
+
+def getMissingItemsfromlists(li1, li2):
+    return list(set(li2) - set(li1))
+
 print(getFleetNamesFromJson(jsonData, "test"))
-print(getFleetIPsFromJson(jsonData, "test", "app"))
-print(getIPsetList())
+jsonIPs = getFleetIPsFromJson(jsonData, "test", "app")
+print(jsonIPs)
+currentIP = ['10.0.0.1', '10.0.0.2', '10.10.0.61']
+print("Remove IPs: " + str(getExtraItemsfromlists(currentIP, jsonIPs)) )
+print("Add IPs: " + str(getMissingItemsfromlists(currentIP, jsonIPs)) )
