@@ -25,13 +25,14 @@ def createIPset(IPsetName):
             "firewall-cmd", "--permanent", "--new-ipset="+IPsetName, "--type=hash:net"
             ]
     result = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE).stdout.read()
-    return result
+    return bytes(result).decode('utf-8')
 
 def getIPsetList():
     command = [
             "firewall-cmd", "--permanent", "--get-ipsets"
             ]
-    return subprocess.Popen(command, shell=False, stdout=subprocess.PIPE).stdout.read()
+    result = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE).stdout.read()
+    return bytes(result).decode('utf-8').split()
 
 
 def getFleetNamesFromJson(jsonData, environment):
