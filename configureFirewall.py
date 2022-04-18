@@ -11,14 +11,6 @@
 import json
 import subprocess
 
-# Open a file
-consulOutput = open("./test-data/services.json", "r+")
-
-jsonData = json.loads(consulOutput.read())
-consulOutput.close()
-
-environments = ["test", "prod"]
-fleets = ["metrics", "logs", "backups", "app"]
 
 def createIPset(IPsetName):
     command = [
@@ -34,6 +26,12 @@ def getIPsetList():
     result = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE).stdout.read()
     return bytes(result).decode('utf-8').split()
 
+def getIPsetEntries(ipsetName):
+    command = [
+            "firewall-cmd", "--permanent", "--ipset="+ipsetName, "--get-entries"
+            ]
+    result = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE).stdout.read()
+    return bytes(result).decode('utf-8').split()
 
 def getFleetNamesFromJson(jsonData, environment):
     fleetList = []
@@ -61,11 +59,42 @@ def getExtraItemsfromlists(li1, li2):
 def getMissingItemsfromlists(li1, li2):
     return list(set(li2) - set(li1))
 
-print(getFleetNamesFromJson(jsonData, "test"))
-jsonIPs = getFleetIPsFromJson(jsonData, "test", "app")
-print(jsonIPs)
-currentIP = ['10.0.0.1', '10.0.0.2', '10.10.0.61']
-print("Remove IPs: " + str(getExtraItemsfromlists(currentIP, jsonIPs)) )
-print("Add IPs: " + str(getMissingItemsfromlists(currentIP, jsonIPs)) )
-createIPset("app")
-print("IPsets: " + str(getIPsetList()))
+def updateFirewallBasedOnConsul():
+    # arguments tmock
+    stage = "test"
+
+    # Open a file
+    consulOutput = open("./test-data/services.json", "r+")
+    jsonData = json.loads(consulOutput.read())
+    consulOutput.close()
+
+    currentIPsets = getIPsetList()
+    consulIPsets = getFleetNamesFromJson(jsonData, stage)
+    missingIPsets = getMissingItemsfromlists(currentIPsets, consulIPsets)
+
+    for item in missingIPsets:
+        print("Creating IPset for fleet: " + str(item))
+        createIPset(item)
+
+    for ipsetItem in getIPsetList():
+        currentIPsInSet = getIPsetEntries(ipsetItem)
+        jsonIPs = getFleetIPsFromJson(jsonData, stage, ipsetItem)
+        print("Add missing IPs in: " + ipsetItem)
+        print(getMissingItemsfromlists(currentIPsInSet, jsonIPs))
+
+        print("Remove extra IPs in: " + ipsetItem)
+        print(getExtraItemsfromlists(currentIPsInSet, jsonIPs))
+
+
+    # environments = ["test", "prod"]
+    # fleets = ["metrics", "logs", "backups", "app"]
+    print("Tool to update firewall rules based on consul data")
+    print(jsonIPs)
+    currentIP = ['10.0.0.1', '10.0.0.2', '10.10.0.61']
+    print("Remove IPs: " + str(getExtraItemsfromlists(currentIP, jsonIPs)) )
+    print("Add IPs: " + str(getMissingItemsfromlists(currentIP, jsonIPs)) )
+    print("IPsets: " + str(getIPsetList()))
+
+if __name__ == "__main__" :
+    updateFirewallBasedOnConsul()
+
