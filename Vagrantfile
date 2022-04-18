@@ -12,7 +12,7 @@ end
 
 Vagrant::Config.run do |config|
   config.vm.box = "ubuntu/focal64"
-  config.vm.host_name = "consulFirewall" 
+  config.vm.host_name = "node01.logs.test" 
 
   config.vm.share_folder "bootstrap", "/mnt/bootstrap", ".", :create => true
   config.vm.provision :shell, :path => "Vagrant-setup/bootstrap.sh"
