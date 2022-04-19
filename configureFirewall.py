@@ -1,16 +1,39 @@
 #!/usr/bin/env python
 
-
-# The fleets require a firewall(iptables) which allows different fleets access to different ports on the hosts:
-#    5141 - Logstash rsyslog port on logs.*, required access from ALL hosts.
-#    9100 - Node exporter on ALL hosts, required access by metrics.*.
-#    9104 - MySQL exporter on app.* hosts, required access by metrics.*.
-#    3306 - MySQL database on app.*, requried access by backups.*.
-
-
 import json
 import subprocess
 
+def getHostname():
+    command = [
+            "hostname", "-f"
+            ]
+    result = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE).stdout.read()
+    return bytes(result).decode('utf-8')
+
+def reloadFirewalld():
+    command = [
+            "firewall-cmd", "--reload"
+            ]
+    result = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE).stdout.read()
+    return bytes(result).decode('utf-8')
+
+def addFirewalldIPsetRule(zone, sourceIPset):
+    command = [
+            "firewall-cmd", "--permanent", "--zone="+zone, "--add-source=ipset:"+sourceIPset
+            ]
+    result = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE).stdout.read()
+    return bytes(result).decode('utf-8')
+
+def addFirewalldPortRule(zone, port, protocol):
+    command = [
+            "firewall-cmd", "--permanent", "--zone="+zone, "--add-port="+port+"/"+protocol
+            ]
+    result = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE).stdout.read()
+    return bytes(result).decode('utf-8')
+
+def allowSourceandPort(zone, sourceIPset,port, protocol):
+        print(addFirewalldIPsetRule(zone, sourceIPset))
+        print(addFirewalldPortRule(zone, port, protocol))
 
 def createIPset(IPsetName):
     command = [
@@ -32,6 +55,20 @@ def getIPsetEntries(ipsetName):
             ]
     result = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE).stdout.read()
     return bytes(result).decode('utf-8').split()
+
+def addIPsetEntry(ipsetName, entry):
+    command = [
+            "firewall-cmd", "--permanent", "--ipset="+ipsetName, "--add-entry="+entry
+            ]
+    result = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE).stdout.read()
+    return bytes(result).decode('utf-8')
+
+def removeIPsetEntry(ipsetName, entry):
+    command = [
+            "firewall-cmd", "--permanent", "--ipset="+ipsetName, "--remove-entry="+entry
+            ]
+    result = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE).stdout.read()
+    return bytes(result).decode('utf-8')
 
 def getFleetNamesFromJson(jsonData, environment):
     fleetList = []
@@ -62,6 +99,7 @@ def getMissingItemsfromlists(li1, li2):
 def updateFirewallBasedOnConsul():
     # arguments tmock
     stage = "test"
+    zone = "internal"
 
     # Open a file
     consulOutput = open("./test-data/services.json", "r+")
@@ -80,20 +118,33 @@ def updateFirewallBasedOnConsul():
         currentIPsInSet = getIPsetEntries(ipsetItem)
         jsonIPs = getFleetIPsFromJson(jsonData, stage, ipsetItem)
         print("Add missing IPs in: " + ipsetItem)
-        print(getMissingItemsfromlists(currentIPsInSet, jsonIPs))
+        for entry in getMissingItemsfromlists(currentIPsInSet, jsonIPs):
+            addIPsetEntry(ipsetItem, entry)
+            print("added: "+ entry + " to fleet: " + ipsetItem)
 
         print("Remove extra IPs in: " + ipsetItem)
-        print(getExtraItemsfromlists(currentIPsInSet, jsonIPs))
+        for entry in getExtraItemsfromlists(currentIPsInSet, jsonIPs):
+            removeIPsetEntry(ipsetItem, entry)
+            print("Removed: "+ entry + " from fleet: " + ipsetItem)
 
+    hostName = getHostname()
 
-    # environments = ["test", "prod"]
-    # fleets = ["metrics", "logs", "backups", "app"]
-    print("Tool to update firewall rules based on consul data")
-    print(jsonIPs)
-    currentIP = ['10.0.0.1', '10.0.0.2', '10.10.0.61']
-    print("Remove IPs: " + str(getExtraItemsfromlists(currentIP, jsonIPs)) )
-    print("Add IPs: " + str(getMissingItemsfromlists(currentIP, jsonIPs)) )
-    print("IPsets: " + str(getIPsetList()))
+    #    9100 - Node exporter on ALL hosts, required access by metrics.*.
+    firewallChange = allowSourceandPort(zone, "metrics", "9100", "tcp")
+    print("firewallChange")
+    #    5141 - Logstash rsyslog port on logs.*, required access from ALL hosts.
+    if "logs" in hostName:
+        for item in getIPsetList():
+            firewallChange = allowSourceandPort(zone, item, "5141", "udp")
+            print("firewallChange")
+    elif "app" in hostname:
+        #    9104 - MySQL exporter on app.* hosts, required access by metrics.*.
+        firewallChange = allowSourceandPort(zone, "metrics", "9104", "tcp")
+        print("firewallChange")
+        #    3306 - MySQL database on app.*, requried access by backups.*.
+        firewallChange = allowSourceandPort(zone, "backups", "3306", "tcp")
+        print("firewallChange")
+
 
 if __name__ == "__main__" :
     updateFirewallBasedOnConsul()
