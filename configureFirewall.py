@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
+import sys, getopt
 import json
 import subprocess
+import requests
 
 def getHostname():
     command = [
@@ -96,16 +98,7 @@ def getExtraItemsfromlists(li1, li2):
 def getMissingItemsfromlists(li1, li2):
     return list(set(li2) - set(li1))
 
-def updateFirewallBasedOnConsul():
-    # arguments tmock
-    stage = "test"
-    zone = "internal"
-
-    # Open a file
-    consulOutput = open("./test-data/services.json", "r+")
-    jsonData = json.loads(consulOutput.read())
-    consulOutput.close()
-
+def updateFirewallBasedOnConsul(stage, zone, jsonData):
     currentIPsets = getIPsetList()
     consulIPsets = getFleetNamesFromJson(jsonData, stage)
     missingIPsets = getMissingItemsfromlists(currentIPsets, consulIPsets)
@@ -145,7 +138,35 @@ def updateFirewallBasedOnConsul():
         firewallChange = allowSourceandPort(zone, "backups", "3306", "tcp")
         print("firewallChange")
 
+    # Reload firewalld to apply changes
+    print("Reloading firewalld: " + reloadFirewalld())
+
+def main(argv):
+    # arguments tmock
+    stage = ''
+    zone = ''
+    try:
+        opts, args = getopt.getopt(argv,"hs:z:",["stage=","zone="])
+    except getopt.GetoptError:
+        print ('configureFirewall.py -s <stage> -z <zone>')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print ('configureFirewall.py -s <stage> -z <zone>')
+            sys.exit()
+        elif opt in ("-s", "--stage"):
+            stage = arg
+        elif opt in ("-z", "--zone"):
+            zone = arg
+
+    # Open a file
+    consulOutput = open("./test-data/services.json", "r+")
+    jsonData = json.loads(consulOutput.read())
+    consulOutput.close()
+
+    updateFirewallBasedOnConsul(stage, zone, jsonData)
+
 
 if __name__ == "__main__" :
-    updateFirewallBasedOnConsul()
+    main(sys.argv[1:])
 
