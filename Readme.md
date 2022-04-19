@@ -17,6 +17,6 @@ configureFirewall.py -s test -z internal -u http://localhost:8500/v1/catalog/ser
 
 options:
 
--s --stage
--z --zone
--u --url
+* -s --stage
+* -z --zone
+* -u --url
