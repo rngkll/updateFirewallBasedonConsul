@@ -142,31 +142,36 @@ def updateFirewallBasedOnConsul(stage, zone, jsonData):
     print("Reloading firewalld: " + reloadFirewalld())
 
 def main(argv):
-    # arguments tmock
     stage = ''
     zone = ''
+    url = ''
     try:
-        opts, args = getopt.getopt(argv,"hs:z:",["stage=","zone="])
+        opts, args = getopt.getopt(argv,"hs:z:u:",["stage=","zone=", "url="])
     except getopt.GetoptError:
-        print ('configureFirewall.py -s <stage> -z <zone>')
+        print ('configureFirewall.py -s <stage> -z <zone> -u <consuldataURL>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print ('configureFirewall.py -s <stage> -z <zone>')
+            print ('configureFirewall.py -s <stage> -z <zone> -u <consuldataURL>')
             sys.exit()
         elif opt in ("-s", "--stage"):
             stage = arg
         elif opt in ("-z", "--zone"):
             zone = arg
+        elif opt in ("-u", "--url"):
+            url = arg
 
     # Open a file
     consulOutput = open("./test-data/services.json", "r+")
     jsonData = json.loads(consulOutput.read())
     consulOutput.close()
 
+    # Uncomment for using API request
+    #response = requests.get(url)
+    #jsonData = response.json()
+
     updateFirewallBasedOnConsul(stage, zone, jsonData)
 
 
 if __name__ == "__main__" :
     main(sys.argv[1:])
-
